@@ -1,10 +1,9 @@
-# Real Time Facial Recognition Using Webcam
-
-
 import cv2
 import numpy as np
 import face_recognition
 import os
+from datetime import datetime
+import time
 
 path = 'photos for training'  # Path for the photos to train the model.
 training_photos = []  # Photos in the central Database
@@ -27,6 +26,37 @@ def encode_images(training_photos):  # function for the encoding of images
         encoded_images_list.append(image_encode)  # and appended to this list
     return encoded_images_list
 
+
+def attendance_marking_during_entry(name):   # function for marking attendance after face has been recognized
+    with open('Attendance.csv', 'r+') as file:      # a csv file named Attendance records the attendance of a class
+        # for a given lecture
+
+        database_list = file.readlines()    # reads the names of students from the central database
+        student_list = []   # names of students that will attend the class
+        for line in database_list:
+            entry = line.split(',')     # these two lines are to make sure that duplicate attendance is not recorded
+            student_list.append(entry[0])  # if someone's present their attendance will be written in the Attendance.csv
+        if name not in student_list:        # for students whose attendance are not already marked
+            current_time = datetime.now()   # the moment their face is recognized their attendance is marked for that
+            # particular timestamp
+            current_time_string = current_time.strftime('%H:%M:%S')     # strftime is a inbuilt method to convert time
+            # in string format
+            file.writelines(f'\n{name}, {current_time_string}')     # attendance is written in our Attendance.csv
+
+
+"""def attendance_marking_during_exit(name):
+    with open('Attendance.csv', 'r+') as file:
+
+        database_list = file.readlines()
+        student_list = []
+        for line in database_list:
+            exit_time = line.split(',')
+            student_list.append(exit_time[0])
+        if name not in student_list:
+            current_time = datetime.now()
+            current_time_string = current_time.strftime('%H:%M:%S')
+            file.writelines(f'\n\t\t{current_time_string}')
+"""
 
 known_encoded_images_list = encode_images(training_photos)  # encoded images from the function are stored in this list
 print('Encoding Complete')
@@ -69,6 +99,8 @@ while True:
             cv2.rectangle(img, (x1, y2 - 25), (x2, y2), (255, 255, 255), cv2.FILLED)
             cv2.putText(img, name + " | PRESENT", (x1 + 3, y2 - 3), cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.75, (0, 0, 0), 2)
             # face recognized and marked present.
+            attendance_marking_during_entry(name)    # attendance marking function called after a face is recognized
+
 
     cv2.imshow('Live Feed', img)
     cv2.waitKey(1)
